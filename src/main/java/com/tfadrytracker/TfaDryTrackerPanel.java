@@ -13,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 /** The sidebar always shows the current RuneScape account's saved counters. */
@@ -44,11 +45,11 @@ public final class TfaDryTrackerPanel extends PluginPanel
 
 		JLabel title = new JLabel("TFA Dry tracker");
 		title.setForeground(PURPLE);
-		title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
+		title.setFont(FontManager.getRunescapeBoldFont());
 		addAligned(content, title);
 		content.add(Box.createVerticalStrut(5));
 		accountLabel.setForeground(MUTED);
-		accountLabel.setFont(accountLabel.getFont().deriveFont(11f));
+		accountLabel.setFont(FontManager.getRunescapeFont());
 		addAligned(content, accountLabel);
 		content.add(Box.createVerticalStrut(18));
 		addAligned(content, counterCard("PERSONAL DRY", "Raids since your purple", personalValue));
@@ -59,7 +60,7 @@ public final class TfaDryTrackerPanel extends PluginPanel
 		content.add(Box.createVerticalStrut(16));
 
 		statusLabel.setForeground(TEXT);
-		statusLabel.setFont(statusLabel.getFont().deriveFont(12f));
+		statusLabel.setFont(FontManager.getRunescapeSmallFont());
 		addAligned(content, statusLabel);
 		content.add(Box.createVerticalStrut(14));
 
@@ -69,7 +70,7 @@ public final class TfaDryTrackerPanel extends PluginPanel
 			+ "Solo raids count toward both."
 			+ "</div></html>");
 		rules.setForeground(MUTED);
-		rules.setFont(rules.getFont().deriveFont(11f));
+		rules.setFont(FontManager.getRunescapeSmallFont());
 		addAligned(content, rules);
 		content.add(Box.createVerticalStrut(18));
 
@@ -92,16 +93,16 @@ public final class TfaDryTrackerPanel extends PluginPanel
 		card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
 
 		JLabel heading = new JLabel(title);
-		heading.setFont(heading.getFont().deriveFont(Font.BOLD, 11f));
+		heading.setFont(FontManager.getRunescapeBoldFont());
 		heading.setForeground(PURPLE);
 		addAligned(card, heading);
 		card.add(Box.createVerticalStrut(3));
-		value.setFont(value.getFont().deriveFont(Font.BOLD, 32f));
+		value.setFont(FontManager.getRunescapeFont());
 		value.setForeground(TEXT);
 		addAligned(card, value);
 		JLabel description = new JLabel(caption);
 		description.setForeground(MUTED);
-		description.setFont(description.getFont().deriveFont(11f));
+		description.setFont(FontManager.getRunescapeSmallFont());
 		addAligned(card, description);
 		return card;
 	}
@@ -122,15 +123,15 @@ public final class TfaDryTrackerPanel extends PluginPanel
 		card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
 		JLabel heading = new JLabel("LAST PURPLE");
 		heading.setForeground(PURPLE);
-		heading.setFont(heading.getFont().deriveFont(Font.BOLD, 11f));
+		heading.setFont(FontManager.getRunescapeBoldFont());
 		addAligned(card, heading);
 		card.add(Box.createVerticalStrut(7));
 		lastItemLabel.setForeground(TEXT);
-		lastItemLabel.setFont(lastItemLabel.getFont().deriveFont(Font.BOLD, 14f));
+		lastItemLabel.setFont(FontManager.getRunescapeSmallFont());
 		addAligned(card, lastItemLabel);
 		card.add(Box.createVerticalStrut(4));
 		lastRecipientLabel.setForeground(MUTED);
-		lastRecipientLabel.setFont(lastRecipientLabel.getFont().deriveFont(11f));
+		lastRecipientLabel.setFont(FontManager.getRunescapeSmallFont());
 		addAligned(card, lastRecipientLabel);
 		return card;
 	}

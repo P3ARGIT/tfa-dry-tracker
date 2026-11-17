@@ -252,7 +252,7 @@ public final class TfaDryTrackerPlugin extends Plugin
 			}
 			resetChestObservations();
 			status = state.lastKc == 0 ? "Ready. Both counters start at zero."
-				: "Saved counters loaded. Last recorded KC: " + state.lastKc + ".";
+				: "Last recorded KC: " + state.lastKc;
 			refresh();
 		}
 		return true;
