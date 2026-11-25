@@ -5,16 +5,13 @@ import com.google.inject.Provides;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
-import net.runelite.api.NPC;
-import net.runelite.api.NPCComposition;
+
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
@@ -26,14 +23,20 @@ import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.gameval.VarClientID;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatCommandManager;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ChatInput;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +60,9 @@ public final class TfaDryTrackerPlugin extends Plugin
 	@Inject private OverlayManager overlayManager;
 	@Inject private TfaDryTrackerConfig config;
 	@Inject private Gson gson;
+	@Inject public ChatCommandManager chatCommandManager;
+	@Inject private ScheduledExecutorService executor;
+	@Inject private CustomChatClient chatClient;
 
 	private DryStreakState state = new DryStreakState();
 	private String profileKey;
@@ -86,6 +92,8 @@ public final class TfaDryTrackerPlugin extends Plugin
 			() -> state.team, () -> state.lastItem, () -> state.lastRecipient);
 		overlayManager.add(overlay);
 		clientThread.invokeLater(() -> { ensureProfile(); refresh(); });
+
+		chatCommandManager.registerCommandAsync("!tfadry", this::getDryStreak, this::submitData);
 	}
 
 	@Override
@@ -94,6 +102,74 @@ public final class TfaDryTrackerPlugin extends Plugin
 		if (overlay != null) { overlayManager.remove(overlay); }
 		if (navigation != null) { toolbar.removeNavigation(navigation); }
 		clearSession();
+		chatCommandManager.unregisterCommand("!tfadry");
+	}
+
+	private CustomChatClient.StreakPair getCommandData(ChatMessage chatMessage, String s)
+	{
+		final String player;
+		if (chatMessage.getType().equals(ChatMessageType.PRIVATECHATOUT))
+		{
+			player = client.getLocalPlayer().getName();
+		}
+		else
+		{
+			player = Text.sanitize(chatMessage.getName());
+		}
+
+		try
+		{
+			return chatClient.getMemory(player);
+		}
+		catch (IOException ex)
+		{
+			LOG.warn("unable to lookup player memory", ex);
+			return null;
+		}
+	}
+
+	private void getDryStreak(ChatMessage chatMessage, String s)
+	{
+		CustomChatClient.StreakPair streak = getCommandData(chatMessage, s);
+
+		if (streak == null) {
+			return;
+		}
+
+		String message = new ChatMessageBuilder()
+				.append(new Color(0, 128, 128), "TFA Dry Streak")
+				.append(ChatColorType.HIGHLIGHT)
+				.append(" - Personal: ")
+				.append(Color.CYAN, Integer.toString(streak.personal))
+				.append(ChatColorType.HIGHLIGHT)
+				.append(" / Team: ")
+				.append(Color.CYAN, Integer.toString(streak.team))
+				.build();
+		final MessageNode messageNode = chatMessage.getMessageNode();
+		messageNode.setRuneLiteFormatMessage(message);
+		client.refreshChat();
+	}
+
+	private boolean submitData(ChatInput chatInput, String s)
+	{
+
+		final String playerName = client.getLocalPlayer().getName();
+		executor.execute(() ->
+		{
+			try
+			{
+				chatClient.submitMemory(playerName, new CustomChatClient.StreakPair(state.personal, state.team));
+			}
+			catch (Exception ex)
+			{
+				LOG.warn("unable to submit memory", ex);
+			}
+			finally
+			{
+				chatInput.resume();
+			}
+		});
+		return true;
 	}
 
 	@Subscribe
